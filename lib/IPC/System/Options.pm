@@ -85,6 +85,8 @@ C<LANG> but lower than C<LC_*>), and C<LANG>.
 Of course you can set the environment variables manually, this option is just
 for convenience.
 
+=back
+
 =head2 backtick([ \%opts ], @args)
 
 Just like perl's backtick operator (C<qx()>) except that it accepts an optional

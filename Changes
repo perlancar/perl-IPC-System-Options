@@ -1,5 +1,10 @@
 Revision history for IPC-System-Options
 
+0.02    2015-01-04 (PERLANCAR)
+
+	- Add backtick().
+
+
 0.01     2015-01-04 (PERLANCAR)
 
          - First release.
