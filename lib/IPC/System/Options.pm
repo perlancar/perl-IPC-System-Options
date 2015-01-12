@@ -10,6 +10,8 @@ use warnings;
 use Exporter qw(import);
 our @EXPORT_OK = qw(system backtick);
 
+my $log;
+
 sub _system_or_backtick {
     my $which = shift;
     my $opts = ref($_[0]) eq 'HASH' ? shift : {};
@@ -18,15 +20,34 @@ sub _system_or_backtick {
     local $ENV{LANGUAGE} = $opts->{lang} if $opts->{lang};
     local $ENV{LANG}     = $opts->{lang} if $opts->{lang};
 
+    state $log = do { require Log::Any; Log::Any->get_logger } if $opts->{log};
+
     if ($which eq 'system') {
+
+        $log->tracef("system(%s)", \@_) if $opts->{log};
+        my $res;
         if (defined($opts->{shell}) && !$opts->{shell}) {
-            return system {$_[0]} @_;
+            $res = system {$_[0]} @_;
         } else {
-            return system @_;
+            $res = system @_;
         }
+        $log->tracef("result of system(): %s", $res) if $opts->{log};
+        return $res;
+
     } else {
+
         my $cmd = join " ", @_;
-        return `$cmd`;
+        $log->tracef("qx(%s)", $cmd) if $opts->{log};
+        if (wantarray) {
+            my @res = `$cmd`;
+            $log->tracef("result of qx(): %s", \@res) if $opts->{log};
+            return @res;
+        } else {
+            my $res = `$cmd`;
+            $log->tracef("result of qx(): %s", $res) if $opts->{log};
+            return $res;
+        }
+
     }
 }
 
