@@ -7,6 +7,8 @@ use 5.010001;
 use strict;
 use warnings;
 
+use Proc::ChildError qw(explain_child_error);
+
 use Exporter qw(import);
 our @EXPORT_OK = qw(system backtick);
 
@@ -22,33 +24,68 @@ sub _system_or_backtick {
 
     state $log = do { require Log::Any; Log::Any->get_logger } if $opts->{log};
 
+    my $wa;
+    my $res;
+
     if ($which eq 'system') {
 
         $log->tracef("system(%s)", \@_) if $opts->{log};
-        my $res;
         if (defined($opts->{shell}) && !$opts->{shell}) {
             $res = system {$_[0]} @_;
         } else {
             $res = system @_;
         }
-        $log->tracef("result of system(): %s", $res) if $opts->{log};
-        return $res;
 
     } else {
 
+        $wa = wantarray;
         my $cmd = join " ", @_;
         $log->tracef("qx(%s)", $cmd) if $opts->{log};
-        if (wantarray) {
-            my @res = `$cmd`;
-            $log->tracef("result of qx(): %s", \@res) if $opts->{log};
-            return @res;
+        if ($wa) {
+            $res = [`$cmd`];
         } else {
-            my $res = `$cmd`;
-            $log->tracef("result of qx(): %s", $res) if $opts->{log};
-            return $res;
+            $res = `$cmd`;
+        }
+        # log output
+        if ($opts->{log}) {
+            my $res_show;
+            if (defined $opts->{max_log_output}) {
+                $res_show = '';
+                if ($wa) {
+                    for (@$res) {
+                        if (length($res_show) + length($_) >=
+                                $opts->{max_log_output}) {
+                            $res_show .= substr(
+                                $_,0,$opts->{max_log_output}-length($res_show));
+                            last;
+                        } else {
+                            $res_show .= $_;
+                        }
+                    }
+                } else {
+                    if (length($res) > $opts->{max_log_output}) {
+                        $res_show = substr($res, 0, $opts->{max_log_output});
+                    }
+                }
+            }
+            $log->tracef("result of backtick(): %s (%d bytes)",
+                         $res_show // $res,
+                         defined($res_show) ?
+                             $opts->{max_log_output} : length($res))
+                unless $?;
         }
 
+    } # which
+
+    if ($?) {
+        $log->tracef("%s(%s) failed: %d (%s)",
+                     $which, \@_, $?, explain_child_error())
+            if $opts->{log};
+        die "$which(".join(" ", @_).") failed: " . explain_child_error()
+            if $opts->{die};
     }
+
+    return $wa ? @$res : $res;
 }
 
 sub system {
@@ -79,6 +116,9 @@ sub backtick {
  # set LC_ALL/LANGUAGE/LANG environment variable
  system({lang=>"de_DE.UTF-8"}, "df");
 
+ # log using Log::Any, die on failure
+ system({log=>1, die=>1}, "blah", ...);
+
 
 =head1 DESCRIPTION
 
@@ -106,6 +146,15 @@ C<LANG> but lower than C<LC_*>), and C<LANG>.
 Of course you can set the environment variables manually, this option is just
 for convenience.
 
+=item * log => bool
+
+If set to true, then will log invocation as well as return/result value. Will
+log using L<Log::Any> at the C<trace> level.
+
+=item * die => bool
+
+If set to true, will die on failure.
+
 =back
 
 =head2 backtick([ \%opts ], @args)
@@ -120,5 +169,18 @@ Known options:
 =item * lang => str
 
 See option documentation in C<system()>.
+
+=item * log => bool
+
+See option documentation in C<system()>.
+
+=item * die => bool
+
+See option documentation in C<system()>.
+
+=item * max_log_output => int
+
+If set, will limit result length being logged. It's a good idea to set this
+(e.g. to 1024) if you expect some command to return large output.
 
 =back
