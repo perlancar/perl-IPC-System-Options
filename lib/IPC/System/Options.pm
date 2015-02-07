@@ -19,7 +19,7 @@ sub import {
     my $caller = caller();
     my $i = 0;
     while ($i < @_) {
-        if ($_[$i] eq 'system' || $_[$i] eq 'backtick') {
+        if ($_[$i] eq 'system' || $_[$i] eq 'backtick' || $_[$i] eq 'import') {
             no strict 'refs';
             *{"$caller\::$_[$i]"} = \&{$_[$i]};
         } elsif ($_[$i] =~ /\A-(.+)/) {
