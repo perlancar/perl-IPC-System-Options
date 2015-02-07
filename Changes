@@ -1,5 +1,11 @@
 Revision history for IPC-System-Options
 
+0.04    2015-02-07 (PERLANCAR)
+
+	- [ux] Use croak instead of die (nicer in default/non-backtracing
+	  environment).
+
+
 0.03    2015-01-12 (PERLANCAR)
 
         - Add option: die=>1.
