@@ -7,6 +7,7 @@ use 5.010001;
 use strict;
 use warnings;
 
+use Carp;
 use Proc::ChildError qw(explain_child_error);
 
 use Exporter qw(import);
@@ -81,7 +82,7 @@ sub _system_or_backtick {
         $log->tracef("%s(%s) failed: %d (%s)",
                      $which, \@_, $?, explain_child_error())
             if $opts->{log};
-        die "$which(".join(" ", @_).") failed: " . explain_child_error()
+        croak "$which(".join(" ", @_).") failed: " . explain_child_error()
             if $opts->{die};
     }
 
