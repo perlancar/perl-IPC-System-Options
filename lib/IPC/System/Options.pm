@@ -10,14 +10,33 @@ use warnings;
 use Carp;
 use Proc::ChildError qw(explain_child_error);
 
-use Exporter qw(import);
-our @EXPORT_OK = qw(system backtick);
-
 my $log;
+our %Global_Opts;
+
+sub import {
+    my $self = shift;
+
+    my $caller = caller();
+    my $i = 0;
+    while ($i < @_) {
+        if ($_[$i] eq 'system' || $_[$i] eq 'backtick') {
+            no strict 'refs';
+            *{"$caller\::$_[$i]"} = \&{$_[$i]};
+        } elsif ($_[$i] =~ /\A-(.+)/) {
+            croak "$_[$i] requires an argument" unless $i < @_-1;
+            $Global_Opts{$1} = $_[$i+1];
+            $i++;
+        } else {
+            croak "$_[$i] is not exported by ".__PACKAGE__;
+        }
+        $i++;
+    }
+}
 
 sub _system_or_backtick {
     my $which = shift;
     my $opts = ref($_[0]) eq 'HASH' ? shift : {};
+    $opts->{$_} //= $Global_Opts{$_} for keys %Global_Opts;
 
     local $ENV{LC_ALL}   = $opts->{lang} if $opts->{lang};
     local $ENV{LANGUAGE} = $opts->{lang} if $opts->{lang};
@@ -102,10 +121,13 @@ sub backtick {
 
 =head1 SYNOPSIS
 
- use IPC::System::Options qw(system);
+ use IPC::System::Options qw(system backtick);
 
  # use exactly like system()
  system(...);
+
+ # use exactly like backtick (qx, ``)
+ my $res = backtick(...);
 
  # but it accepts an optional hash first argument to specify options
  system({...}, ...);
@@ -119,6 +141,10 @@ sub backtick {
 
  # log using Log::Any, die on failure
  system({log=>1, die=>1}, "blah", ...);
+
+Set default options for all calls (prefix each option with dash):
+
+ use IPC::System::Options 'system', 'backtick', -log=>1, -die=>1;
 
 
 =head1 DESCRIPTION
