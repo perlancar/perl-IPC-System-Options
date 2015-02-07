@@ -98,7 +98,7 @@ sub _system_or_backtick {
     } # which
 
     if ($?) {
-        $log->tracef("%s(%s) failed: %d (%s)",
+        $log->errorf("%s(%s) failed: %d (%s)",
                      $which, \@_, $?, explain_child_error())
             if $opts->{log};
         croak "$which(".join(" ", @_).") failed: " . explain_child_error()
