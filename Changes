@@ -1,5 +1,12 @@
 Revision history for IPC-System-Options
 
+0.05    2015-02-07 (PERLANCAR)
+
+	- Use log level error to log failure.
+
+	- Allow specifying default options during use.
+
+
 0.04    2015-02-07 (PERLANCAR)
 
 	- [ux] Use croak instead of die (nicer in default/non-backtracing
