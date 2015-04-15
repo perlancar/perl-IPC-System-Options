@@ -50,9 +50,14 @@ sub _system_or_backtick {
     if ($which eq 'system') {
 
         $log->tracef("system(%s)", \@_) if $opts->{log};
-        if (defined($opts->{shell}) && !$opts->{shell}) {
+        if ($opts->{shell}) {
+            # force the use of shell
+            $res = system join(" ", @_);
+        } elsif (defined $opts->{shell}) {
+            # forbid shell
             $res = system {$_[0]} @_;
         } else {
+            # might or might not use shell (if @_ == 1)
             $res = system @_;
         }
 
