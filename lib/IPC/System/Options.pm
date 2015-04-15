@@ -38,9 +38,23 @@ sub _system_or_backtick {
     my $opts = ref($_[0]) eq 'HASH' ? shift : {};
     $opts->{$_} //= $Global_Opts{$_} for keys %Global_Opts;
 
-    local $ENV{LC_ALL}   = $opts->{lang} if $opts->{lang};
-    local $ENV{LANGUAGE} = $opts->{lang} if $opts->{lang};
-    local $ENV{LANG}     = $opts->{lang} if $opts->{lang};
+    # set ENV
+    my %save_env;
+    my %set_env;
+    if ($opts->{lang}) {
+        $set_env{LC_ALL}   = $opts->{lang};
+        $set_env{LANGUAGE} = $opts->{lang};
+        $set_env{LANG}     = $opts->{lang};
+    }
+    if ($opts->{env}) {
+        $set_env{$_} = $opts->{env}{$_} for keys %{ $opts->{env} };
+    }
+    if (%set_env) {
+        for (keys %set_env) {
+            $save_env{$_} = $ENV{$_};
+            $ENV{$_} = $set_env{$_};
+        }
+    }
 
     state $log = do { require Log::Any; Log::Any->get_logger } if $opts->{log};
 
@@ -49,7 +63,7 @@ sub _system_or_backtick {
 
     if ($which eq 'system') {
 
-        $log->tracef("system(%s)", \@_) if $opts->{log};
+        $log->tracef("system(%s), env=%s", \@_, \%set_env) if $opts->{log};
         if ($opts->{shell}) {
             # force the use of shell
             $res = system join(" ", @_);
@@ -65,7 +79,7 @@ sub _system_or_backtick {
 
         $wa = wantarray;
         my $cmd = join " ", @_;
-        $log->tracef("qx(%s)", $cmd) if $opts->{log};
+        $log->tracef("qx(%s), env=%s", $cmd, \%set_env) if $opts->{log};
         if ($wa) {
             $res = [`$cmd`];
         } else {
@@ -101,6 +115,17 @@ sub _system_or_backtick {
         }
 
     } # which
+
+    # restore ENV
+    if (%save_env) {
+        for (keys %save_env) {
+            if (defined $save_env{$_}) {
+                $ENV{$_} = $save_env{$_};
+            } else {
+                undef $ENV{$_};
+            }
+        }
+    }
 
     if ($?) {
         $log->errorf("%s(%s) failed: %d (%s)",
@@ -170,13 +195,17 @@ shell under certain conditions, like Perl's C<system()>.
 
 =item * lang => str
 
-Set locale-related environment variables: C<LC_ALL> (this is the highest
-precedence, even higher than the other C<LC_*> variables including
+Temporarily set locale-related environment variables: C<LC_ALL> (this is the
+highest precedence, even higher than the other C<LC_*> variables including
 C<LC_MESSAGES>), C<LANGUAGE> (this is used in Linux, with precedence higher than
 C<LANG> but lower than C<LC_*>), and C<LANG>.
 
-Of course you can set the environment variables manually, this option is just
-for convenience.
+Of course you can set the environment variables manually (or use the C<env>
+option), this option is just for convenience.
+
+=item * env => hashref
+
+Temporarily set environment variables.
 
 =item * log => bool
 
@@ -199,6 +228,10 @@ Known options:
 =over
 
 =item * lang => str
+
+See option documentation in C<system()>.
+
+=item * env => hash
 
 See option documentation in C<system()>.
 
