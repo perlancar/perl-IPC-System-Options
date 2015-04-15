@@ -1,5 +1,10 @@
 Revision history for IPC-System-Options
 
+0.08    2015-04-15 (PERLANCAR)
+
+        - Add option: env.
+
+
 0.07    2015-04-15 (PERLANCAR)
 
 	- When shell=>1, force the use of shell by concat-ing the args.
