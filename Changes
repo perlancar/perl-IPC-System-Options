@@ -1,5 +1,11 @@
 Revision history for IPC-System-Options
 
+0.09    2015-04-21 (PERLANCAR)
+
+	- Degrade Log::Any from RuntimeRequires to RuntimeRecommends, to
+	  reduce deps.
+
+
 0.08    2015-04-15 (PERLANCAR)
 
         - Add option: env.
