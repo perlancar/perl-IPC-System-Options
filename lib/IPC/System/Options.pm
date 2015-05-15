@@ -38,6 +38,8 @@ sub _system_or_backtick {
     my $opts = ref($_[0]) eq 'HASH' ? shift : {};
     $opts->{$_} //= $Global_Opts{$_} for keys %Global_Opts;
 
+    my $opt_die = $opts->{die} || $opts->{dies};
+
     # set ENV
     my %save_env;
     my %set_env;
@@ -132,7 +134,7 @@ sub _system_or_backtick {
                      $which, \@_, $?, explain_child_error())
             if $opts->{log};
         croak "$which(".join(" ", @_).") failed: " . explain_child_error()
-            if $opts->{die};
+            if $opt_die;
     }
 
     return $wa ? @$res : $res;
