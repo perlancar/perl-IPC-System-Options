@@ -2,7 +2,7 @@ Revision history for IPC-System-Options
 
 0.10    2015-05-15 (PERLANCAR)
 
-	- Accept option dies as well as die.
+	- [ux] Accept option dies as well as die, but this is not documented.
 
 
 0.09    2015-04-21 (PERLANCAR)
