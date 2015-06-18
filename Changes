@@ -1,5 +1,10 @@
 Revision history for IPC-System-Options
 
+0.11    2015-06-18 (PERLANCAR)
+
+	- Add option: capture.
+
+
 0.10    2015-05-15 (PERLANCAR)
 
 	- [ux] Accept option dies as well as die, but this is not documented.
