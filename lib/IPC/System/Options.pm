@@ -90,7 +90,7 @@ sub _system_or_backtick {
         if ($opts->{capture}) {
             require Capture::Tiny;
             ($opts->{capture}[0], $opts->{capture}[1]) =
-                Capture::Tiny::capture($doit);
+                &Capture::Tiny::capture($doit);
         } else {
             $doit->();
         }
@@ -112,7 +112,7 @@ sub _system_or_backtick {
         if ($opts->{capture}) {
             require Capture::Tiny;
             ($opts->{capture}[0], $opts->{capture}[1]) =
-                Capture::Tiny::capture($doit);
+                &Capture::Tiny::capture($doit);
         } else {
             $doit->();
         }
