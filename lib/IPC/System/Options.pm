@@ -79,7 +79,7 @@ sub _system_or_backtick {
                 $res = system join(" ", @args);
             } elsif (defined $opts->{shell}) {
                 # forbid shell
-                $res = system {$_[0]} @args;
+                $res = system {$args[0]} @args;
             } else {
                 # might or might not use shell (if @args == 1)
                 $res = system @args;
