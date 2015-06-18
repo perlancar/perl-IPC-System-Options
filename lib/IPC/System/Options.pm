@@ -37,6 +37,7 @@ sub _system_or_backtick {
     my $which = shift;
     my $opts = ref($_[0]) eq 'HASH' ? shift : {};
     $opts->{$_} //= $Global_Opts{$_} for keys %Global_Opts;
+    my @args = @_;
 
     my $opt_die = $opts->{die} || $opts->{dies};
 
@@ -57,36 +58,65 @@ sub _system_or_backtick {
             $ENV{$_} = $set_env{$_};
         }
     }
+    if ($opts->{capture}) {
+        die "Please provide arrayref for capture"
+            unless ref($opts->{capture}) eq 'ARRAY';
+    }
 
     state $log = do { require Log::Any; Log::Any->get_logger } if $opts->{log};
 
     my $wa;
     my $res;
+    my $exit_code;
+    my $os_error;
 
     if ($which eq 'system') {
 
-        $log->tracef("system(%s), env=%s", \@_, \%set_env) if $opts->{log};
-        if ($opts->{shell}) {
-            # force the use of shell
-            $res = system join(" ", @_);
-        } elsif (defined $opts->{shell}) {
-            # forbid shell
-            $res = system {$_[0]} @_;
+        $log->tracef("system(%s), env=%s", \@args, \%set_env) if $opts->{log};
+        my $doit = sub {
+            if ($opts->{shell}) {
+                # force the use of shell
+                $res = system join(" ", @args);
+            } elsif (defined $opts->{shell}) {
+                # forbid shell
+                $res = system {$_[0]} @args;
+            } else {
+                # might or might not use shell (if @args == 1)
+                $res = system @args;
+            }
+            $exit_code = $?;
+            $os_error = $!;
+        };
+        if ($opts->{capture}) {
+            require Capture::Tiny;
+            ($opts->{capture}[0], $opts->{capture}[1]) =
+                Capture::Tiny::capture($doit);
         } else {
-            # might or might not use shell (if @_ == 1)
-            $res = system @_;
+            $doit->();
         }
 
     } else {
 
         $wa = wantarray;
-        my $cmd = join " ", @_;
+        my $cmd = join " ", @args;
         $log->tracef("qx(%s), env=%s", $cmd, \%set_env) if $opts->{log};
-        if ($wa) {
-            $res = [`$cmd`];
+        my $doit = sub {
+            if ($wa) {
+                $res = [`$cmd`];
+            } else {
+                $res = `$cmd`;
+            }
+            $exit_code = $?;
+            $os_error = $!;
+        };
+        if ($opts->{capture}) {
+            require Capture::Tiny;
+            ($opts->{capture}[0], $opts->{capture}[1]) =
+                Capture::Tiny::capture($doit);
         } else {
-            $res = `$cmd`;
+            $doit->();
         }
+
         # log output
         if ($opts->{log}) {
             my $res_show;
@@ -113,7 +143,7 @@ sub _system_or_backtick {
                          $res_show // $res,
                          defined($res_show) ?
                              $opts->{max_log_output} : length($res))
-                unless $?;
+                unless $exit_code;
         }
 
     } # which
@@ -129,12 +159,13 @@ sub _system_or_backtick {
         }
     }
 
-    if ($?) {
+    if ($exit_code) {
         $log->errorf("%s(%s) failed: %d (%s)",
-                     $which, \@_, $?, explain_child_error())
+                     $which, \@args, $exit_code,
+                     explain_child_error($exit_code, $os_error))
             if $opts->{log};
-        croak "$which(".join(" ", @_).") failed: " . explain_child_error()
-            if $opt_die;
+        croak "$which(".join(" ", @args).") failed: " .
+            explain_child_error($exit_code, $os_error) if $opt_die;
     }
 
     return $wa ? @$res : $res;
@@ -217,6 +248,11 @@ log using L<Log::Any> at the C<trace> level.
 =item * die => bool
 
 If set to true, will die on failure.
+
+=item * capture => arrayref
+
+Capture output (stdout/stderr) using L<Capture::Tiny>. The first element of the
+arrayref will contain stdout, the second will contain stderr.
 
 =back
 
