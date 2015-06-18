@@ -1,5 +1,12 @@
 Revision history for IPC-System-Options
 
+0.12    2015-06-18 (PERLANCAR)
+
+	- [Bugfix] Defeat prototype checking (which might be active or not,
+	  depending whether Capture::Tiny has previously been loaded during
+	  compile time).
+
+
 0.11    2015-06-18 (PERLANCAR)
 
 	- Add option: capture.
