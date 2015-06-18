@@ -1,5 +1,10 @@
 Revision history for IPC-System-Options
 
+0.13    2015-06-18 (PERLANCAR)
+
+	- [Bugfix] Forgot to rename an instance of variable.
+
+
 0.12    2015-06-18 (PERLANCAR)
 
 	- [Bugfix] Defeat prototype checking (which might be active or not,
