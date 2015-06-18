@@ -168,6 +168,12 @@ sub _system_or_backtick {
             explain_child_error($exit_code, $os_error) if $opt_die;
     }
 
+    # make sure our user see the correct exit code & os error. this is not
+    # currently needed as nothing yet clobbers $? & $!. but they might be needed
+    # later (if we do more stuff which sets these variables) so i put it in.
+    $? = $exit_code;
+    $! = $os_error;
+
     return $wa ? @$res : $res;
 }
 
