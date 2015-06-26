@@ -64,7 +64,7 @@ sub _system_or_backtick {
             unless ref($opts->{capture}) eq 'ARRAY';
     }
 
-    state $log = do { require Log::Any; Log::Any->get_logger } if $opts->{log};
+    $log ||= do { require Log::Any; Log::Any->get_logger } if $opts->{log};
 
     my $wa;
     my $res;

@@ -1,5 +1,13 @@
 Revision history for IPC-System-Options
 
+0.16    2015-06-26 (PERLANCAR)
+
+	- No functional changes.
+
+	- Third attempt, previous release didn't remove the usage of state
+          variable.
+
+
 0.15    2015-06-26 (PERLANCAR)
 
 	- No functional changes.
