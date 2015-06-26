@@ -3,7 +3,6 @@ package IPC::System::Options;
 # DATE
 # VERSION
 
-use 5.010001;
 use strict;
 use warnings;
 
@@ -36,7 +35,9 @@ sub import {
 sub _system_or_backtick {
     my $which = shift;
     my $opts = ref($_[0]) eq 'HASH' ? shift : {};
-    $opts->{$_} //= $Global_Opts{$_} for keys %Global_Opts;
+    for (keys %Global_Opts) {
+        $opts->{$_} = $Global_Opts{$_} if !defined($opts->{$_});
+    }
     my @args = @_;
 
     my $opt_die = $opts->{die} || $opts->{dies};
@@ -140,7 +141,7 @@ sub _system_or_backtick {
                 }
             }
             $log->tracef("result of backtick(): %s (%d bytes)",
-                         $res_show // $res,
+                         defined($res_show) ? $res_show : $res,
                          defined($res_show) ?
                              $opts->{max_log_output} : length($res))
                 unless $exit_code;
