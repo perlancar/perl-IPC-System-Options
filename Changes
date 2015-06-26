@@ -1,5 +1,12 @@
 Revision history for IPC-System-Options
 
+0.14    2015-06-26 (PERLANCAR)
+
+	- No functional changes.
+
+	- Allow running under perl < 5.10.
+
+
 0.13    2015-06-18 (PERLANCAR)
 
 	- [Bugfix] Forgot to rename an instance of variable.
