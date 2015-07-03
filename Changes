@@ -1,5 +1,12 @@
 Revision history for IPC-System-Options
 
+0.17    2015-07-03 (PERLANCAR)
+
+	- [Incompatible change] Replace 'capture' option with separate
+	  'capture_stdout' and 'capture_stderr' options to be more flexible
+	  (e.g. only capturing stdout and letting stderr show through).
+
+
 0.16    2015-06-26 (PERLANCAR)
 
 	- No functional changes.
