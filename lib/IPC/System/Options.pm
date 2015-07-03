@@ -59,10 +59,6 @@ sub _system_or_backtick {
             $ENV{$_} = $set_env{$_};
         }
     }
-    if ($opts->{capture}) {
-        die "Please provide arrayref for capture"
-            unless ref($opts->{capture}) eq 'ARRAY';
-    }
 
     $log ||= do { require Log::Any; Log::Any->get_logger } if $opts->{log};
 
@@ -70,6 +66,30 @@ sub _system_or_backtick {
     my $res;
     my $exit_code;
     my $os_error;
+
+    my $code_capture = sub {
+        my $doit = shift;
+
+        if ($opts->{capture}) {
+            die "The 'capture' option has been replaced by 'capture_stdout' & 'capture_stderr', please adjust your code first";
+        }
+
+        if ($opts->{capture_stdout} && $opts->{capture_stderr}) {
+            require Capture::Tiny;
+            (${ $opts->{capture_stdout} }, ${ $opts->{capture_stderr} }) =
+                &Capture::Tiny::capture($doit);
+        } elsif ($opts->{capture_stdout}) {
+            require Capture::Tiny;
+            ${ $opts->{capture_stdout} } =
+                &Capture::Tiny::capture_stdout($doit);
+        } elsif ($opts->{capture_stderr}) {
+            require Capture::Tiny;
+            ${ $opts->{capture_stderr} } =
+                &Capture::Tiny::capture_stderr($doit);
+        } else {
+            $doit->();
+        }
+    };
 
     if ($which eq 'system') {
 
@@ -88,13 +108,7 @@ sub _system_or_backtick {
             $exit_code = $?;
             $os_error = $!;
         };
-        if ($opts->{capture}) {
-            require Capture::Tiny;
-            ($opts->{capture}[0], $opts->{capture}[1]) =
-                &Capture::Tiny::capture($doit);
-        } else {
-            $doit->();
-        }
+        $code_capture->($doit);
 
     } else {
 
@@ -110,13 +124,7 @@ sub _system_or_backtick {
             $exit_code = $?;
             $os_error = $!;
         };
-        if ($opts->{capture}) {
-            require Capture::Tiny;
-            ($opts->{capture}[0], $opts->{capture}[1]) =
-                &Capture::Tiny::capture($doit);
-        } else {
-            $doit->();
-        }
+        $code_capture->($doit);
 
         # log output
         if ($opts->{log}) {
@@ -256,10 +264,13 @@ log using L<Log::Any> at the C<trace> level.
 
 If set to true, will die on failure.
 
-=item * capture => arrayref
+=item * capture_stdout => scalarref
 
-Capture output (stdout/stderr) using L<Capture::Tiny>. The first element of the
-arrayref will contain stdout, the second will contain stderr.
+Capture stdout using L<Capture::Tiny>.
+
+=item * capture_stderr => scalarref
+
+Capture stderr using L<Capture::Tiny>.
 
 =back
 
@@ -285,6 +296,14 @@ See option documentation in C<system()>.
 See option documentation in C<system()>.
 
 =item * die => bool
+
+See option documentation in C<system()>.
+
+=item * capture_stdout => scalarref
+
+See option documentation in C<system()>.
+
+=item * capture_stderr => scalarref
 
 See option documentation in C<system()>.
 
