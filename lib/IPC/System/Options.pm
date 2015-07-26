@@ -169,12 +169,23 @@ sub _system_or_backtick {
     }
 
     if ($exit_code) {
-        $log->errorf("%s(%s) failed: %d (%s)",
-                     $which, \@args, $exit_code,
-                     explain_child_error($exit_code, $os_error))
-            if $opts->{log};
-        croak "$which(".join(" ", @args).") failed: " .
-            explain_child_error($exit_code, $os_error) if $opt_die;
+        if ($opts->{log} || $opt_die) {
+            my $msg = sprintf(
+                "%s(%s) failed: %d (%s)%s%s",
+                $which,
+                join(" ", @args),
+                $exit_code,
+                explain_child_error($exit_code, $os_error),
+                (ref($opts->{capture_stdout}) ?
+                     ", captured stdout: <<" .
+                     ${$opts->{capture_stdout}} . ">>" : ""),
+                (ref($opts->{capture_stderr}) ?
+                     ", captured stderr: <<" .
+                     ${$opts->{capture_stderr}} . ">>" : ""),
+            );
+            $log->error($msg) if $opts->{log};
+            croak $msg if $opt_die;
+        }
     }
 
     # make sure our user see the correct exit code & os error. this is not
