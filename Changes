@@ -1,5 +1,11 @@
 Revision history for IPC-System-Options
 
+0.18    2015-07-27 (PERLANCAR)
+
+        - [Bugfix] Allow import() to be used by other package, e.g.
+          IPC::System::Locale, by exporting the correct system() and backtick().
+
+
 0.17    2015-07-03 (PERLANCAR)
 
 	- [Incompatible change] Replace 'capture' option with separate
