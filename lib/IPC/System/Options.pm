@@ -20,7 +20,7 @@ sub import {
     while ($i < @_) {
         if ($_[$i] eq 'system' || $_[$i] eq 'backtick' || $_[$i] eq 'import') {
             no strict 'refs';
-            *{"$caller\::$_[$i]"} = \&{$_[$i]};
+            *{"$caller\::$_[$i]"} = \&{"$self\::" . $_[$i]};
         } elsif ($_[$i] =~ /\A-(.+)/) {
             croak "$_[$i] requires an argument" unless $i < @_-1;
             $Global_Opts{$1} = $_[$i+1];
