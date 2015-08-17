@@ -1,5 +1,12 @@
 Revision history for IPC-System-Options
 
+0.21    2015-08-17 (PERLANCAR)
+
+	- No functional changes.
+
+	- Switch from Log::Any to Log::Any::IfLOG.
+
+
 0.20    2015-07-27 (PERLANCAR)
 
 	- [ux] On error, show captured stdout & stderr in log/die message.
