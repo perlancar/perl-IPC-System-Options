@@ -60,7 +60,7 @@ sub _system_or_backtick {
         }
     }
 
-    $log ||= do { require Log::Any; Log::Any->get_logger } if $opts->{log};
+    $log ||= do { require Log::Any::IfLOG; Log::Any::IfLOG->get_logger } if $opts->{log};
 
     my $wa;
     my $res;
