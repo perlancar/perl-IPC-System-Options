@@ -1,5 +1,11 @@
 Revision history for IPC-System-Options
 
+0.22    2015-09-12 (PERLANCAR)
+
+	- Bump prereq Log::Any::IfLOG to version 0.07 (uses get_logger())
+	  [RT#107051].
+
+
 0.21    2015-08-17 (PERLANCAR)
 
 	- No functional changes.
