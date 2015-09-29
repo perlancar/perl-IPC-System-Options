@@ -18,7 +18,7 @@ sub import {
     my $caller = caller();
     my $i = 0;
     while ($i < @_) {
-        if ($_[$i] eq 'system' || $_[$i] eq 'backtick' || $_[$i] eq 'import') {
+        if ($_[$i] =~ /\A(system|backtick|run|import)\z/) {
             no strict 'refs';
             *{"$caller\::$_[$i]"} = \&{"$self\::" . $_[$i]};
         } elsif ($_[$i] =~ /\A-(.+)/) {
@@ -32,7 +32,7 @@ sub import {
     }
 }
 
-sub _system_or_backtick {
+sub _system_or_backtick_or_run {
     my $which = shift;
     my $opts = ref($_[0]) eq 'HASH' ? shift : {};
     for (keys %Global_Opts) {
@@ -110,7 +110,7 @@ sub _system_or_backtick {
         };
         $code_capture->($doit);
 
-    } else {
+    } elsif ($which eq 'backtick') {
 
         $wa = wantarray;
         my $cmd = join " ", @args;
@@ -155,6 +155,31 @@ sub _system_or_backtick {
                 unless $exit_code;
         }
 
+    } else {
+
+        $log->tracef("run(%s), env=%s", \@args, \%set_env) if $opts->{log};
+        require IPC::Run;
+        $res = IPC::Run::run(
+            \@args,
+            defined($opts->{stdin}) ? \$opts->{stdin} : \*STDIN,
+            sub {
+                if ($opts->{capture_stdout}) {
+                    ${$opts->{capture_stdout}} .= $_[0];
+                } else {
+                    print $_[0];
+                }
+            }, # out
+            sub {
+                if ($opts->{capture_stderr}) {
+                    ${$opts->{capture_stderr}} .= $_[0];
+                } else {
+                    print STDERR $_[0];
+                }
+            }, # err
+        );
+        $exit_code = $?;
+        $os_error = $!;
+
     } # which
 
     # restore ENV
@@ -194,15 +219,19 @@ sub _system_or_backtick {
     $? = $exit_code;
     $! = $os_error;
 
-    return $wa ? @$res : $res;
+    return $wa && $which ne 'run' ? @$res : $res;
 }
 
 sub system {
-    _system_or_backtick('system', @_);
+    _system_or_backtick_or_run('system', @_);
 }
 
 sub backtick {
-    _system_or_backtick('backtick', @_);
+    _system_or_backtick_or_run('backtick', @_);
+}
+
+sub run {
+    _system_or_backtick_or_run('run', @_);
 }
 
 1;
@@ -210,7 +239,7 @@ sub backtick {
 
 =head1 SYNOPSIS
 
- use IPC::System::Options qw(system backtick);
+ use IPC::System::Options qw(system backtick run);
 
  # use exactly like system()
  system(...);
@@ -234,6 +263,16 @@ sub backtick {
 Set default options for all calls (prefix each option with dash):
 
  use IPC::System::Options 'system', 'backtick', -log=>1, -die=>1;
+
+C<run()> is like C<system()> but uses L<IPC::Run>'s C<run()> instead of
+C<system()>:
+
+ run('ls');
+
+ # also accepts an optional hash first argument. some additional options that
+ # run() accepts: stdin.
+ run({capture_stdout => \$stdout, capture_stderr => \$stderr}, 'ls', '-l');
+
 
 
 =head1 DESCRIPTION
@@ -322,5 +361,41 @@ See option documentation in C<system()>.
 
 If set, will limit result length being logged. It's a good idea to set this
 (e.g. to 1024) if you expect some command to return large output.
+
+=back
+
+=head2 run([ \%opts ], @args)
+
+Like C<system()>, but uses L<IPC::Run>'s C<run()>. Known options:
+
+=over
+
+=item * lang => str
+
+See option documentation in C<system()>.
+
+=item * env => hash
+
+See option documentation in C<system()>.
+
+=item * log => bool
+
+See option documentation in C<system()>.
+
+=item * die => bool
+
+See option documentation in C<system()>.
+
+=item * capture_stdout => scalarref
+
+See option documentation in C<system()>.
+
+=item * capture_stderr => scalarref
+
+See option documentation in C<system()>.
+
+=item * stdin => scalar
+
+Supply standard input.
 
 =back
