@@ -1,5 +1,12 @@
 Revision history for IPC-System-Options
 
+0.24    2016-01-02 (PERLANCAR)
+
+	- No functional changes.
+
+	- Avoid using Carp for faster startup.
+
+
 0.23    2015-09-29 (PERLANCAR)
 
 	- Add run(), first written for use in Test::Perinci::CmdLine because I
