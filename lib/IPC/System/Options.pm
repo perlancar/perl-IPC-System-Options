@@ -6,7 +6,6 @@ package IPC::System::Options;
 use strict;
 use warnings;
 
-use Carp;
 use Proc::ChildError qw(explain_child_error);
 
 my $log;
@@ -22,11 +21,11 @@ sub import {
             no strict 'refs';
             *{"$caller\::$_[$i]"} = \&{"$self\::" . $_[$i]};
         } elsif ($_[$i] =~ /\A-(.+)/) {
-            croak "$_[$i] requires an argument" unless $i < @_-1;
+            die "$_[$i] requires an argument" unless $i < @_-1;
             $Global_Opts{$1} = $_[$i+1];
             $i++;
         } else {
-            croak "$_[$i] is not exported by ".__PACKAGE__;
+            die "$_[$i] is not exported by ".__PACKAGE__;
         }
         $i++;
     }
@@ -209,7 +208,7 @@ sub _system_or_backtick_or_run {
                      (${$opts->{capture_stderr}} // ''). ">>" : ""),
             );
             $log->error($msg) if $opts->{log};
-            croak $msg if $opt_die;
+            die $msg if $opt_die;
         }
     }
 
