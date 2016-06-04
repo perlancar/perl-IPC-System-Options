@@ -32,7 +32,11 @@ sub import {
     }
 }
 
-sub _quote_as_string {
+sub _quote {
+    if (@_ == 1) {
+        return $_[0];
+    }
+
     if ($^O eq 'MSWin32') {
         require Win32::ShellQuote;
         return Win32::ShellQuote::quote_system_string(@_);
