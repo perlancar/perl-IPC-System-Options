@@ -267,6 +267,10 @@ sub run {
  system({shell=>0}, "ls");
  system({shell=>0}, "ls -lR"); # will fail, as there is no 'ls -lR' binary
 
+ # force shell, even though there are multiple arguments (arguments will be
+ # quoted for you, including proper quoting on Win32)
+ system({shell=>1}, "ls", "-lR");
+
  # set LC_ALL/LANGUAGE/LANG environment variable
  system({lang=>"de_DE.UTF-8"}, "df");
 
@@ -302,7 +306,10 @@ argument to specify options. Currently known options:
 =item * shell => bool
 
 Can be set to 0 to always avoid invoking the shell. The default is to use the
-shell under certain conditions, like Perl's C<system()>.
+shell under certain conditions, like perl's C<system()>. But unlike perl's
+C<system()>, you can force shell usage even though you pass multiple arguments
+(in which case, the arguments will be quoted for you, including proper quoting
+on Win32).
 
 =item * lang => str
 
@@ -340,7 +347,9 @@ Capture stderr using L<Capture::Tiny>.
 =head2 backtick([ \%opts ], @args)
 
 Just like perl's backtick operator (C<qx()>) except that it accepts an optional
-hash first argument to specify options.
+hash first argument to specify options. And it can accept multiple arguments (in
+which case, the arguments will be quoted for you, including proper quoting on
+Win32).
 
 Known options:
 
