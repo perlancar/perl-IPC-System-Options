@@ -110,7 +110,7 @@ sub _system_or_backtick_or_run {
         my $doit = sub {
             if ($opts->{shell}) {
                 # force the use of shell
-                $res = system _quote_as_string(@args);
+                $res = system _quote(@args);
             } elsif (defined $opts->{shell}) {
                 # forbid shell
                 $res = system {$args[0]} @args;
@@ -126,7 +126,7 @@ sub _system_or_backtick_or_run {
     } elsif ($which eq 'backtick') {
 
         $wa = wantarray;
-        my $cmd = _quote_as_string(@args);
+        my $cmd = _quote(@args);
         $log->tracef("qx(%s), env=%s", $cmd, \%set_env) if $opts->{log};
         my $doit = sub {
             if ($wa) {
