@@ -7,6 +7,7 @@ use strict;
 use warnings;
 
 use Proc::ChildError qw(explain_child_error);
+use String::ShellQuote;
 
 my $log;
 our %Global_Opts;
@@ -28,6 +29,15 @@ sub import {
             die "$_[$i] is not exported by ".__PACKAGE__;
         }
         $i++;
+    }
+}
+
+sub _quote_as_string {
+    if ($^O eq 'MSWin32') {
+        require Win32::ShellQuote;
+        return Win32::ShellQuote::quote_system_string(@_);
+    } else {
+        return join(" ", map { shell_quote($_) } @_);
     }
 }
 
@@ -96,7 +106,7 @@ sub _system_or_backtick_or_run {
         my $doit = sub {
             if ($opts->{shell}) {
                 # force the use of shell
-                $res = system join(" ", @args);
+                $res = system _quote_as_string(@args);
             } elsif (defined $opts->{shell}) {
                 # forbid shell
                 $res = system {$args[0]} @args;
@@ -112,7 +122,7 @@ sub _system_or_backtick_or_run {
     } elsif ($which eq 'backtick') {
 
         $wa = wantarray;
-        my $cmd = join " ", @args;
+        my $cmd = _quote_as_string(@args);
         $log->tracef("qx(%s), env=%s", $cmd, \%set_env) if $opts->{log};
         my $doit = sub {
             if ($wa) {
