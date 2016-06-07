@@ -256,6 +256,8 @@ sub run {
 1;
 # ABSTRACT: Perl's system() and readpipe/qx replacement, with options
 
+=for Pod::Coverage ^(backtick)$
+
 =head1 SYNOPSIS
 
  use IPC::System::Options qw(system readpipe run);
@@ -353,10 +355,10 @@ Capture stderr using L<Capture::Tiny>.
 
 =head2 readpipe([ \%opts ], @args)
 
-Just like perl's backtick operator (C<qx()> a.k.a. C<readpipe()>) except that it
-accepts an optional hash first argument to specify options. And it can accept
-multiple arguments (in which case, the arguments will be quoted for you,
-including proper quoting on Win32).
+Just like perl's C<readpipe()> (a.k.a. C<qx()> a.k.a. C<``> a.k.a. the backtick
+operator) except that it accepts an optional hash first argument to specify
+options. And it can accept multiple arguments (in which case, the arguments will
+be quoted for you, including proper quoting on Win32).
 
 Known options:
 

@@ -1,5 +1,12 @@
 Revision history for IPC-System-Options
 
+0.27    2016-06-08 (PERLANCAR)
+
+	- Rename backtick() to readpipe() to allow overriding the
+	  backtick/qx operator (the old name has been deprecated and
+	  removed from doc but still supported for now).
+
+
 0.26    2016-06-04 (PERLANCAR)
 
 	- No functional changes.
