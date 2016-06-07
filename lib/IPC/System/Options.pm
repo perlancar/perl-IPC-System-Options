@@ -18,7 +18,8 @@ sub import {
     my $caller = caller();
     my $i = 0;
     while ($i < @_) {
-        if ($_[$i] =~ /\A(system|backtick|run|import)\z/) {
+        # backtick is the older, deprecated name for readpipe
+        if ($_[$i] =~ /\A(system|readpipe|backtick|run|import)\z/) {
             no strict 'refs';
             *{"$caller\::$_[$i]"} = \&{"$self\::" . $_[$i]};
         } elsif ($_[$i] =~ /\A-(.+)/) {
@@ -45,7 +46,7 @@ sub _quote {
     }
 }
 
-sub _system_or_backtick_or_run {
+sub _system_or_readpipe_or_run {
     my $which = shift;
     my $opts = ref($_[0]) eq 'HASH' ? shift : {};
     for (keys %Global_Opts) {
@@ -123,7 +124,7 @@ sub _system_or_backtick_or_run {
         };
         $code_capture->($doit);
 
-    } elsif ($which eq 'backtick') {
+    } elsif ($which eq 'readpipe') {
 
         $wa = wantarray;
         my $cmd = _quote(@args);
@@ -161,7 +162,7 @@ sub _system_or_backtick_or_run {
                     }
                 }
             }
-            $log->tracef("result of backtick(): %s (%d bytes)",
+            $log->tracef("result of readpipe(): %s (%d bytes)",
                          defined($res_show) ? $res_show : $res,
                          defined($res_show) ?
                              $opts->{max_log_output} : length($res))
@@ -236,32 +237,39 @@ sub _system_or_backtick_or_run {
 }
 
 sub system {
-    _system_or_backtick_or_run('system', @_);
+    _system_or_readpipe_or_run('system', @_);
 }
 
+# backtick is the older, deprecated name for readpipe
 sub backtick {
-    _system_or_backtick_or_run('backtick', @_);
+    _system_or_readpipe_or_run('readpipe', @_);
+}
+
+sub readpipe {
+    _system_or_readpipe_or_run('readpipe', @_);
 }
 
 sub run {
-    _system_or_backtick_or_run('run', @_);
+    _system_or_readpipe_or_run('run', @_);
 }
 
 1;
-# ABSTRACT: Perl's system() and backtick/qx replacement/wrapper, with options
+# ABSTRACT: Perl's system() and readpipe/qx replacement, with options
 
 =head1 SYNOPSIS
 
- use IPC::System::Options qw(system backtick run);
+ use IPC::System::Options qw(system readpipe run);
 
  # use exactly like system()
  system(...);
 
- # use exactly like backtick (qx, ``)
- my $res = backtick(...);
+ # use exactly like readpipe() (a.k.a. qx a.k.a. `` a.k.a. the backtick operator)
+ my $res = readpipe(...);
+ $res = `...`;
 
- # but it accepts an optional hash first argument to specify options
+ # but these functions accept an optional hash first argument to specify options
  system({...}, ...);
+ readpipe({...}, ...);
 
  # run without shell, even though there is only one argument
  system({shell=>0}, "ls");
@@ -272,14 +280,14 @@ sub run {
  system({shell=>1}, "ls", "-lR");
 
  # set LC_ALL/LANGUAGE/LANG environment variable
- system({lang=>"de_DE.UTF-8"}, "df");
+ $res = readpipe({lang=>"de_DE.UTF-8"}, "df");
 
  # log using Log::Any, die on failure
  system({log=>1, die=>1}, "blah", ...);
 
 Set default options for all calls (prefix each option with dash):
 
- use IPC::System::Options 'system', 'backtick', -log=>1, -die=>1;
+ use IPC::System::Options 'system', 'readpipe', -log=>1, -die=>1;
 
 C<run()> is like C<system()> but uses L<IPC::Run>'s C<run()> instead of
 C<system()>:
@@ -289,7 +297,6 @@ C<system()>:
  # also accepts an optional hash first argument. some additional options that
  # run() accepts: stdin.
  run({capture_stdout => \$stdout, capture_stderr => \$stderr}, 'ls', '-l');
-
 
 
 =head1 DESCRIPTION
@@ -344,12 +351,12 @@ Capture stderr using L<Capture::Tiny>.
 
 =back
 
-=head2 backtick([ \%opts ], @args)
+=head2 readpipe([ \%opts ], @args)
 
-Just like perl's backtick operator (C<qx()>) except that it accepts an optional
-hash first argument to specify options. And it can accept multiple arguments (in
-which case, the arguments will be quoted for you, including proper quoting on
-Win32).
+Just like perl's backtick operator (C<qx()> a.k.a. C<readpipe()>) except that it
+accepts an optional hash first argument to specify options. And it can accept
+multiple arguments (in which case, the arguments will be quoted for you,
+including proper quoting on Win32).
 
 Known options:
 
