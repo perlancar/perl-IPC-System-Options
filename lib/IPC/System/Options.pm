@@ -42,7 +42,7 @@ sub _quote {
         require Win32::ShellQuote;
         return Win32::ShellQuote::quote_system_string(@_);
     } else {
-        return join(" ", map { shell_quote($_) } @_);
+        return shell_quote(@_);
     }
 }
 
