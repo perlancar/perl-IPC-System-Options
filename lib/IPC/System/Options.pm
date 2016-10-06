@@ -323,6 +323,9 @@ sub run {
  # log using Log::Any, die on failure
  system({log=>1, die=>1}, "blah", ...);
 
+ # chdir first before running program (and chdir back afterwards)
+ system({chdir => "/tmp", die => 1}, "some-program");
+
 Set default options for all calls (prefix each option with dash):
 
  use IPC::System::Options 'system', 'readpipe', -log=>1, -die=>1;
@@ -390,7 +393,15 @@ Capture stderr using L<Capture::Tiny>.
 =item * chdir => str
 
 Attempt to change to specified directory first and change back to the original
-directory after the command has been run.
+directory after the command has been run. This is a convenient option so you can
+do this kind of task in a single call:
+
+ {
+     my $cwd = getcwd();
+     chdir $dir or die;
+     system(...);
+     chdir $cwd or die;
+ }
 
 If the attempt to chdir before command execution fails, will die if C<die>
 option is set to true. Otherwise, C<$!> (OS error) will be set to the C<chdir()>
