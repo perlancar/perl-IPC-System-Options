@@ -58,7 +58,7 @@ sub _system_or_readpipe_or_run {
     for (keys %$opts) {
         die "Unknown option '$_'"
             unless /\A(
-                        dies?|lang|env|shell|log|
+                        dies?|lang|env|shell|log|max_log_output|
                         capture_stdout|capture_stderr|
                         stdin # XXX: only for run()
                     )\z/x;
@@ -93,10 +93,6 @@ sub _system_or_readpipe_or_run {
 
     my $code_capture = sub {
         my $doit = shift;
-
-        if ($opts->{capture}) {
-            die "The 'capture' option has been replaced by 'capture_stdout' & 'capture_stderr', please adjust your code first";
-        }
 
         if ($opts->{capture_stdout} && $opts->{capture_stderr}) {
             require Capture::Tiny;
