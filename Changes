@@ -1,5 +1,16 @@
 Revision history for IPC-System-Options
 
+0.28    2016-10-06 (PERLANCAR)
+
+        - [Enhancement] Add option: chdir.
+
+        - Die when supplied unknown options.
+
+        - [Bugfix] Avoid the use of defined-or (//) as this requires perl v5.10.
+
+        - [test] Add test suite.
+
+
 0.27    2016-06-08 (PERLANCAR)
 
 	- Rename backtick() to readpipe() to allow overriding the
