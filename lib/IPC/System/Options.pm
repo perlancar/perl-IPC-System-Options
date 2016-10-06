@@ -54,6 +54,16 @@ sub _system_or_readpipe_or_run {
     }
     my @args = @_;
 
+    # check known options
+    for (keys %$opts) {
+        die "Unknown option '$_'"
+            unless /\A(
+                        dies?|lang|env|shell|log|
+                        capture_stdout|capture_stderr|
+                        stdin # XXX: only for run()
+                    )\z/x;
+    }
+
     my $opt_die = $opts->{die} || $opts->{dies};
 
     # set ENV

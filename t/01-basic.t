@@ -10,6 +10,9 @@ use File::Temp qw(tempfile tempdir);
 use IPC::System::Options qw(system readpipe run);
 
 subtest system => sub {
+    subtest "unknown option -> die" => sub {
+        dies_ok { system({foo => 1}, $^X, "-e1") };
+    };
     subtest "opt:die" => sub {
         lives_ok { system(rand()) };
         dies_ok { system({die=>1}, rand()) };
