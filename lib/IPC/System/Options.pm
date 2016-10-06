@@ -58,13 +58,39 @@ sub _system_or_readpipe_or_run {
     for (keys %$opts) {
         die "Unknown option '$_'"
             unless /\A(
-                        dies?|lang|env|shell|log|max_log_output|
                         capture_stdout|capture_stderr|
+                        chdir|dies?|env|lang|log||max_log_output|shell|
                         stdin # XXX: only for run()
                     )\z/x;
     }
 
     my $opt_die = $opts->{die} || $opts->{dies};
+
+    my $exit_code;
+    my $os_error = "";
+    my $extra_error;
+
+    $log ||= do { require Log::Any::IfLOG; Log::Any::IfLOG->get_logger } if $opts->{log};
+
+    my $cwd;
+    if ($opts->{chdir}) {
+        require Cwd;
+        $cwd = Cwd::getcwd();
+        if (!defined $cwd) { # checking $! is always true here, why?
+            $log->error("Can't getcwd: $!") if $log;
+            $exit_code = -1;
+            $os_error = $!;
+            $extra_error = "Can't getcwd";
+            goto CHECK_RESULT;
+        }
+        unless (chdir $opts->{chdir}) {
+            $log->error("Can't chdir to '$opts->{chdir}': $!") if $log;
+            $exit_code = -1;
+            $os_error = $!;
+            $extra_error = "Can't chdir";
+            goto CHECK_RESULT;
+        }
+    }
 
     # set ENV
     my %save_env;
@@ -84,12 +110,8 @@ sub _system_or_readpipe_or_run {
         }
     }
 
-    $log ||= do { require Log::Any::IfLOG; Log::Any::IfLOG->get_logger } if $opts->{log};
-
     my $wa;
     my $res;
-    my $exit_code;
-    my $os_error;
 
     my $code_capture = sub {
         my $doit = shift;
@@ -213,14 +235,26 @@ sub _system_or_readpipe_or_run {
         }
     }
 
+    # restore previous working directory
+    if ($cwd) {
+        unless (chdir $cwd) {
+            $log->error("Can't chdir back to '$cwd': $!") if $log;
+            $exit_code ||= -1;
+            $os_error = $!;
+            $extra_error = "Can't chdir back";
+            goto CHECK_RESULT;
+        }
+    }
+
+  CHECK_RESULT:
     if ($exit_code) {
         if ($opts->{log} || $opt_die) {
             my $msg = sprintf(
-                "%s(%s) failed: %d (%s)%s%s",
+                "%s(%s) failed: %s (%s)%s%s",
                 $which,
                 join(" ", @args),
-                $exit_code,
-                explain_child_error($exit_code, $os_error),
+                defined $extra_error ? "" : $exit_code,
+                defined $extra_error ? "$extra_error: $os_error" : explain_child_error($exit_code, $os_error),
                 (ref($opts->{capture_stdout}) ?
                      ", captured stdout: <<" .
                      (defined ${$opts->{capture_stdout}} ? ${$opts->{capture_stdout}} : ''). ">>" : ""),
@@ -233,11 +267,7 @@ sub _system_or_readpipe_or_run {
         }
     }
 
-    # make sure our user see the correct exit code & os error. this is not
-    # currently needed as nothing yet clobbers $? & $!. but they might be needed
-    # later (if we do more stuff which sets these variables) so i put it in.
     $? = $exit_code;
-    $! = $os_error;
 
     return $wa && $which ne 'run' ? @$res : $res;
 }
@@ -357,6 +387,21 @@ Capture stdout using L<Capture::Tiny>.
 
 Capture stderr using L<Capture::Tiny>.
 
+=item * chdir => str
+
+Attempt to change to specified directory first and change back to the original
+directory after the command has been run.
+
+If the attempt to chdir before command execution fails, will die if C<die>
+option is set to true. Otherwise, C<$!> (OS error) will be set to the C<chdir()>
+error and to minimize surprise C<$?> (child exit code) will also be set to
+non-zero value (-1) even though at this point no child process has been run.
+
+If the attempt to chdir back (after command execution) fails, will die if C<die>
+option is set to true. Otherwise, C<$!> will be set to the C<chdir()> error and
+C<$?> will be set to -1 only if C<$?> is zero. So if the command fails, C<$?>
+will contain the exit code of the command.
+
 =back
 
 =head2 readpipe([ \%opts ], @args)
@@ -399,6 +444,10 @@ See option documentation in C<system()>.
 If set, will limit result length being logged. It's a good idea to set this
 (e.g. to 1024) if you expect some command to return large output.
 
+=item * chdir => str
+
+See option documentation in C<system()>.
+
 =back
 
 =head2 run([ \%opts ], @args)
@@ -434,5 +483,9 @@ See option documentation in C<system()>.
 =item * stdin => scalar
 
 Supply standard input.
+
+=item * chdir => str
+
+See option documentation in C<system()>.
 
 =back

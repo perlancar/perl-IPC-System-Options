@@ -17,6 +17,14 @@ subtest system => sub {
         lives_ok { system(rand()) };
         dies_ok { system({die=>1}, rand()) };
     };
+    subtest "opt:chdir" => sub {
+        my $tempdir = tempdir(CLEANUP => 1);
+        lives_ok { system({die=>1, chdir=>$tempdir}, $^X, "-e1") };
+        dies_ok  { system({die=>1, chdir=>"$tempdir/sub"}, $^X, "-e1") };
+        # XXX test $? set to -1 if chdir fails
+        # XXX test $? set to -1 (only if $? from command was zero) if chdir back fails
+        # XXX test chdir back fails
+    };
 };
 
 subtest readpipe => sub {
