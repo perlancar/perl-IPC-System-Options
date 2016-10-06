@@ -223,10 +223,10 @@ sub _system_or_readpipe_or_run {
                 explain_child_error($exit_code, $os_error),
                 (ref($opts->{capture_stdout}) ?
                      ", captured stdout: <<" .
-                     (${$opts->{capture_stdout}} // ''). ">>" : ""),
+                     (defined ${$opts->{capture_stdout}} ? ${$opts->{capture_stdout}} : ''). ">>" : ""),
                 (ref($opts->{capture_stderr}) ?
                      ", captured stderr: <<" .
-                     (${$opts->{capture_stderr}} // ''). ">>" : ""),
+                     (defined ${$opts->{capture_stderr}} ? ${$opts->{capture_stderr}} : ''). ">>" : ""),
             );
             $log->error($msg) if $opts->{log};
             die $msg if $opt_die;
