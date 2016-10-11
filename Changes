@@ -1,5 +1,12 @@
 Revision history for IPC-System-Options
 
+0.29    2016-10-11 (PERLANCAR)
+
+	- Add option: dry_run.
+
+	- Add some more docs and example for chdir option.
+
+
 0.28    2016-10-06 (PERLANCAR)
 
         - [Enhancement] Add option: chdir.
