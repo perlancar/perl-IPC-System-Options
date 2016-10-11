@@ -41,6 +41,7 @@ subtest system => sub {
     # XXX opt:shell
     # XXX opt:lang
     # XXX opt:log
+    # XXX opt:dry_run
 
     subtest "opt:chdir" => sub {
         my $tempdir = tempdir(CLEANUP => 1);

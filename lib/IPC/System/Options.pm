@@ -59,7 +59,7 @@ sub _system_or_readpipe_or_run {
         die "Unknown option '$_'"
             unless /\A(
                         capture_stdout|capture_stderr|
-                        chdir|dies?|env|lang|log||max_log_output|shell|
+                        chdir|dies?|dry_run|env|lang|log||max_log_output|shell|
                         stdin # XXX: only for run()
                     )\z/x;
     }
@@ -135,7 +135,27 @@ sub _system_or_readpipe_or_run {
 
     if ($which eq 'system') {
 
-        $log->tracef("system(%s), env=%s", \@args, \%set_env) if $opts->{log};
+        if ($opts->{log} || $opts->{dry_run}) {
+            if ($opts->{log}) {
+                my $meth;
+                my $label = "";
+                if ($opts->{dry_run}) {
+                    $label = "[DRY RUN] ";
+                    $meth = "infof";
+                } else {
+                    $meth = "tracef";
+                }
+                $log->$meth("%ssystem(%s), env=%s", $label, \@args, \%set_env);
+            } else {
+                warn "[DRY RUN] system(".join(", ", @args).")\n";
+            }
+            if ($opts->{dry_run}) {
+                $exit_code = 0;
+                $res = "";
+                goto CHECK_RESULT;
+            }
+        }
+
         my $doit = sub {
             if ($opts->{shell}) {
                 # force the use of shell
@@ -156,7 +176,28 @@ sub _system_or_readpipe_or_run {
 
         $wa = wantarray;
         my $cmd = _quote(@args);
-        $log->tracef("qx(%s), env=%s", $cmd, \%set_env) if $opts->{log};
+
+        if ($opts->{log} || $opts->{dry_run}) {
+            if ($opts->{log}) {
+                my $meth;
+                my $label = "";
+                if ($opts->{dry_run}) {
+                    $label = "[DRY RUN] ";
+                    $meth = "infof";
+                } else {
+                    $meth = "tracef";
+                }
+                $log->$meth("%sreadpipe(%s), env=%s", $label, $cmd, \%set_env);
+            } else {
+                warn "[DRY RUN] readpipe($cmd)\n";
+            }
+            if ($opts->{dry_run}) {
+                $exit_code = 0;
+                $res = "";
+                goto CHECK_RESULT;
+            }
+        }
+
         my $doit = sub {
             if ($wa) {
                 $res = [`$cmd`];
@@ -199,7 +240,28 @@ sub _system_or_readpipe_or_run {
 
     } else {
 
-        $log->tracef("run(%s), env=%s", \@args, \%set_env) if $opts->{log};
+        if ($opts->{log} || $opts->{dry_run}) {
+            if ($opts->{log}) {
+                my $meth;
+                my $label = "";
+                if ($opts->{dry_run}) {
+                    $label = "[DRY RUN] ";
+                    $meth = "infof";
+                } else {
+                    $meth = "tracef";
+                }
+                $log->$meth("%srun(%s), env=%s", $label,
+                            join(", ", @args), \%set_env);
+            } else {
+                warn "[DRY RUN] run(".join(", ", @args).")\n";
+            }
+            if ($opts->{dry_run}) {
+                $exit_code = 0;
+                $res = "";
+                goto CHECK_RESULT;
+            }
+        }
+
         require IPC::Run;
         $res = IPC::Run::run(
             \@args,
@@ -413,6 +475,21 @@ option is set to true. Otherwise, C<$!> will be set to the C<chdir()> error and
 C<$?> will be set to -1 only if C<$?> is zero. So if the command fails, C<$?>
 will contain the exit code of the command.
 
+=item * dry_run => bool
+
+If set to true, then will only display what would be executed to STDERR (or log
+at C<warn> level, if C<log> option is true) instead of actually executing the
+command.
+
+Will set C<$?> (child exit code) to 0.
+
+An example of how this option can be used:
+
+ system({ dry_run => $ENV{DRY_RUN} }, ...);
+
+This will allow you to run script in dry-run mode by setting environment
+variable.
+
 =back
 
 =head2 readpipe([ \%opts ], @args)
@@ -459,6 +536,10 @@ If set, will limit result length being logged. It's a good idea to set this
 
 See option documentation in C<system()>.
 
+=item * dry_run => bool
+
+See option documentation in C<system()>.
+
 =back
 
 =head2 run([ \%opts ], @args)
@@ -496,6 +577,10 @@ See option documentation in C<system()>.
 Supply standard input.
 
 =item * chdir => str
+
+See option documentation in C<system()>.
+
+=item * dry_run => bool
 
 See option documentation in C<system()>.
 
