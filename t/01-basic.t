@@ -38,6 +38,12 @@ subtest system => sub {
         like($stderr, qr/123/);
     };
 
+    subtest "opt:capture_merged" => sub {
+        my $merged;
+        system({capture_merged=>\$merged}, $^X, "-e", "\$|++; print 123; print STDERR 456; print 789");
+        is_deeply($merged, "123456789");
+    };
+
     # XXX opt:shell
     # XXX opt:lang
     # XXX opt:log

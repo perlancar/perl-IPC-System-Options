@@ -58,7 +58,7 @@ sub _system_or_readpipe_or_run {
     for (keys %$opts) {
         die "Unknown option '$_'"
             unless /\A(
-                        capture_stdout|capture_stderr|
+                        capture_stdout|capture_stderr|capture_merged|
                         chdir|dies?|dry_run|env|lang|log||max_log_output|shell|
                         stdin # XXX: only for run()
                     )\z/x;
@@ -120,6 +120,10 @@ sub _system_or_readpipe_or_run {
             require Capture::Tiny;
             (${ $opts->{capture_stdout} }, ${ $opts->{capture_stderr} }) =
                 &Capture::Tiny::capture($doit);
+        } elsif ($opts->{capture_merged}) {
+            require Capture::Tiny;
+            ${ $opts->{capture_merged} } =
+                &Capture::Tiny::capture_merged($doit);
         } elsif ($opts->{capture_stdout}) {
             require Capture::Tiny;
             ${ $opts->{capture_stdout} } =
@@ -323,6 +327,9 @@ sub _system_or_readpipe_or_run {
                 (ref($opts->{capture_stderr}) ?
                      ", captured stderr: <<" .
                      (defined ${$opts->{capture_stderr}} ? ${$opts->{capture_stderr}} : ''). ">>" : ""),
+                (ref($opts->{capture_merged}) ?
+                     ", captured merged: <<" .
+                     (defined ${$opts->{capture_merged}} ? ${$opts->{capture_merged}} : ''). ">>" : ""),
             );
             $log->error($msg) if $opts->{log};
             die $msg if $opt_die;
@@ -452,6 +459,11 @@ Capture stdout using L<Capture::Tiny>.
 
 Capture stderr using L<Capture::Tiny>.
 
+=item * capture_merged => scalarref
+
+Capture stdout and stderr in a single variable using L<Capture::Tiny>'s
+C<capture_merged>.
+
 =item * chdir => str
 
 Attempt to change to specified directory first and change back to the original
@@ -527,6 +539,10 @@ See option documentation in C<system()>.
 
 See option documentation in C<system()>.
 
+=item * capture_merged => scalarref
+
+See option documentation in C<system()>.
+
 =item * max_log_output => int
 
 If set, will limit result length being logged. It's a good idea to set this
@@ -569,6 +585,10 @@ See option documentation in C<system()>.
 See option documentation in C<system()>.
 
 =item * capture_stderr => scalarref
+
+See option documentation in C<system()>.
+
+=item * capture_merged => scalarref
 
 See option documentation in C<system()>.
 
