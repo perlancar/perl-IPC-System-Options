@@ -316,7 +316,7 @@ sub _system_or_readpipe_or_run {
     if ($exit_code) {
         if ($opts->{log} || $opt_die) {
             my $msg = sprintf(
-                "%s(%s) failed: %s (%s)%s%s",
+                "%s(%s) failed: %s (%s)%s%s%s",
                 $which,
                 join(" ", @args),
                 defined $extra_error ? "" : $exit_code,
