@@ -1,3 +1,10 @@
+0.31    2017-04-09 (PERLANCAR)
+
+	- No functional changes.
+
+	- [Bugfix] Add missing sprintf placeholder.
+
+
 0.30    2017-03-09 (PERLANCAR)
 
 	- Add option: capture_merged.
