@@ -40,9 +40,13 @@ sub _quote {
 
     if ($^O eq 'MSWin32') {
         require Win32::ShellQuote;
-        return Win32::ShellQuote::quote_system_string(@_);
+        return Win32::ShellQuote::quote_system_string(
+            map { ref($_) eq 'SCALAR' ? $$_ : $_ } @_);
     } else {
-        return shell_quote(@_);
+        return join(
+            " ",
+            map { ref($_) eq 'SCALAR' ? $$_ : shell_quote($_) } @_
+        );
     }
 }
 
@@ -407,8 +411,12 @@ sub run {
  system({shell=>0}, "ls -lR"); # will fail, as there is no 'ls -lR' binary
 
  # force shell, even though there are multiple arguments (arguments will be
- # quoted for you, including proper quoting on Win32)
- system({shell=>1}, "ls", "-lR");
+ # quoted for you, including proper quoting on Win32).
+ system({shell=>1}, "ls", "-laR");
+
+ # note that to prevent the quoting mechanism from quoting some special
+ # characters (like ">") you can use scalar references, e.g.:
+ system({shell=>1}, "ls", "-laR", \">", "/root/ls-laR");
 
  # set LC_ALL/LANGUAGE/LANG environment variable
  $res = readpipe({lang=>"de_DE.UTF-8"}, "df");
