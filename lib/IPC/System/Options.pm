@@ -1,6 +1,7 @@
 package IPC::System::Options;
 
 # DATE
+# DIST
 # VERSION
 
 use strict 'subs', 'vars';
@@ -433,7 +434,7 @@ sub start {
  # set LC_ALL/LANGUAGE/LANG environment variable
  $res = readpipe({lang=>"de_DE.UTF-8"}, "df");
 
- # log using Log::Any, die on failure
+ # log using Log::ger, die on failure
  system({log=>1, die=>1}, "blah", ...);
 
  # chdir first before running program (and chdir back afterwards)
@@ -497,7 +498,7 @@ Temporarily set environment variables.
 =item * log => bool
 
 If set to true, then will log invocation as well as return/result value. Will
-log using L<Log::Any> at the C<trace> level.
+log using L<Log::ger> at the C<trace> level.
 
 =item * die => bool
 
