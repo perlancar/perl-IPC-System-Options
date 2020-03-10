@@ -1,5 +1,6 @@
 package IPC::System::Options;
 
+# AUTHORITY
 # DATE
 # DIST
 # VERSION
@@ -8,7 +9,6 @@ use strict 'subs', 'vars';
 use warnings;
 
 use Proc::ChildError qw(explain_child_error);
-use String::ShellQuote;
 
 my $log;
 our %Global_Opts;
@@ -34,19 +34,32 @@ sub import {
     }
 }
 
-sub _quote {
+# currently unused
+sub _quote_arg {
+    my $arg = shift;
+    if ($^O eq 'MSWin32') {
+        require Win32::ShellQuote;
+        return Win32::ShellQuote::quote_system_string($arg);
+    } else {
+        require String::ShellQuote;
+        return shell_quote($arg);
+    }
+}
+
+# currently unused
+sub _join_args_to_cmd {
     if (@_ == 1) {
         return $_[0];
     }
-
     if ($^O eq 'MSWin32') {
         require Win32::ShellQuote;
         return Win32::ShellQuote::quote_system_string(
             map { ref($_) eq 'SCALAR' ? $$_ : $_ } @_);
     } else {
+        require String::ShellQuote;
         return join(
             " ",
-            map { ref($_) eq 'SCALAR' ? $$_ : shell_quote($_) } @_
+            map { ref($_) eq 'SCALAR' ? $$_ : String::ShellQuote::shell_quote($_) } @_
         );
     }
 }
@@ -122,6 +135,10 @@ sub _system_or_readpipe_or_run_or_start {
     my $wa;
     my $res;
 
+    my $capture_stdout_was_false;
+    my $emulate_backtick;
+    my $tmp_capture_stdout;
+
     my $code_capture = sub {
         my $doit = shift;
 
@@ -190,7 +207,7 @@ sub _system_or_readpipe_or_run_or_start {
         my $doit = sub {
             if ($opts->{shell}) {
                 # force the use of shell
-                $res = system _quote(@args);
+                $res = system join(" ", @args);
             } elsif (defined $opts->{shell}) {
                 # forbid shell
                 $res = system {$args[0]} @args;
@@ -206,7 +223,6 @@ sub _system_or_readpipe_or_run_or_start {
     } elsif ($which eq 'readpipe') {
 
         $wa = wantarray;
-        my $cmd = _quote(@args);
 
         if ($opts->{log} || $opts->{dry_run}) {
             if ($opts->{log}) {
@@ -219,9 +235,9 @@ sub _system_or_readpipe_or_run_or_start {
                 } else {
                     $routine = "log_trace";
                 }
-                $routine->("%sreadpipe(%s), env=%s", $label, $cmd, \%set_env);
+                $routine->("%sreadpipe(%s), env=%s", $label, (@args == 1 ? $args[0] : \@args), \%set_env);
             } else {
-                warn "[DRY RUN] readpipe($cmd)\n";
+                warn "[DRY RUN] readpipe(".(@args == 1 ? $args[0] : "[".join(", ", \@args)."]").")\n";
             }
             if ($opts->{dry_run}) {
                 $exit_code = 0;
@@ -230,16 +246,42 @@ sub _system_or_readpipe_or_run_or_start {
             }
         }
 
+        # we want to avoid the shell, so we don't use the builtin backtick.
+        # instead, we emulate backtick by system + capturing the output
+        if (defined $opts->{shell} && !$opts->{shell}) {
+            $emulate_backtick++;
+            die "Currently cannot backtick() with options shell=0 and capture_merged|tee_*"
+                if $opts->{capture_merged} || $opts->{tee_stdout} || $opts->{tee_stderr} || $opts->{tee_merged};
+            if (!$opts->{capture_stdout}) {
+                $capture_stdout_was_false++;
+                $opts->{capture_stdout} = \$tmp_capture_stdout;
+            }
+        }
+
         my $doit = sub {
-            if ($wa) {
-                $res = [`$cmd`];
+            if ($emulate_backtick) {
+                system {$args[0]} @args;
             } else {
-                $res = `$cmd`;
+                my $cmd = join(" ", @args);
+                #warn "cmd for backtick: " . $cmd;
+                # use backtick, which uses the shell
+                if ($wa) {
+                    $res = [`$cmd`];
+                } else {
+                    $res = `$cmd`;
+                }
             }
             $exit_code = $?;
             $os_error = $!;
         };
         $code_capture->($doit);
+
+        if ($emulate_backtick) {
+            $res = $capture_stdout_was_false ? $tmp_capture_stdout :
+                ${ $opts->{capture_stdout} };
+            $res = [split /^/m, $res] if $wa;
+            $opts->{capture_stdout} = undef if $capture_stdout_was_false;
+        }
 
         # log output
         if ($opts->{log}) {
