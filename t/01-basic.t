@@ -91,8 +91,8 @@ subtest readpipe => sub {
         print $fh_script2 "print <STDIN> * 2";
         close $fh_script2;
 
-        is(readpipe({shell=>1}, $^X, $script1, " | ", $^X, $script2), 246);
-        #readpipe({shell=>0}, "");
+        is(readpipe({shell=>1}, $^X, $script1, \"|", $^X, $script2), 246);
+        is(readpipe({shell=>0}, $^X, $script1, \"|", $^X, $script2), 123);
     };
 
     # XXX opt:max_log_output

@@ -34,20 +34,7 @@ sub import {
     }
 }
 
-# currently unused
-sub _quote_arg {
-    my $arg = shift;
-    if ($^O eq 'MSWin32') {
-        require Win32::ShellQuote;
-        return Win32::ShellQuote::quote_system_string($arg);
-    } else {
-        require String::ShellQuote;
-        return shell_quote($arg);
-    }
-}
-
-# currently unused
-sub _join_args_to_cmd {
+sub _args2cmd {
     if (@_ == 1) {
         return $_[0];
     }
@@ -195,7 +182,7 @@ sub _system_or_readpipe_or_run_or_start {
                 }
                 $routine->("%ssystem(%s), env=%s", $label, \@args, \%set_env);
             } else {
-                warn "[DRY RUN] system(".join(", ", @args).")\n";
+                warn "[DRY RUN] system("._args2cmd(@args).")\n";
             }
             if ($opts->{dry_run}) {
                 $exit_code = 0;
@@ -207,7 +194,7 @@ sub _system_or_readpipe_or_run_or_start {
         my $doit = sub {
             if ($opts->{shell}) {
                 # force the use of shell
-                $res = system join(" ", @args);
+                $res = system _args2cmd(@args);
             } elsif (defined $opts->{shell}) {
                 # forbid shell
                 $res = system {$args[0]} @args;
@@ -235,9 +222,9 @@ sub _system_or_readpipe_or_run_or_start {
                 } else {
                     $routine = "log_trace";
                 }
-                $routine->("%sreadpipe(%s), env=%s", $label, (@args == 1 ? $args[0] : \@args), \%set_env);
+                $routine->("%sreadpipe(%s), env=%s", $label, _args2cmd(@args), \%set_env);
             } else {
-                warn "[DRY RUN] readpipe(".(@args == 1 ? $args[0] : "[".join(", ", \@args)."]").")\n";
+                warn "[DRY RUN] readpipe("._args2cmd(@args).")\n";
             }
             if ($opts->{dry_run}) {
                 $exit_code = 0;
@@ -260,9 +247,11 @@ sub _system_or_readpipe_or_run_or_start {
 
         my $doit = sub {
             if ($emulate_backtick) {
+                # we don't want shell so we have to emulate backtick with system
+                # + capture the output ourselves
                 system {$args[0]} @args;
             } else {
-                my $cmd = join(" ", @args);
+                my $cmd = _args2cmd(@args);
                 #warn "cmd for backtick: " . $cmd;
                 # use backtick, which uses the shell
                 if ($wa) {
@@ -453,25 +442,30 @@ sub start {
  # use exactly like system()
  system(...);
 
- # use exactly like readpipe() (a.k.a. qx a.k.a. `` a.k.a. the backtick operator)
+ # use exactly like readpipe() (a.k.a. qx a.k.a. `` a.k.a. the backtick
+ # operator). if you import readpipe, you'll override the backtick operator with
+ # this module's version (along with your chosen settings).
  my $res = readpipe(...);
  $res = `...`;
 
  # but these functions accept an optional hash first argument to specify options
  system({...}, ...);
- readpipe({...}, ...);
+ $res = readpipe({...}, ...);
 
  # run without shell, even though there is only one argument
  system({shell=>0}, "ls");
- system({shell=>0}, "ls -lR"); # will fail, as there is no 'ls -lR' binary
+ system({shell=>0}, "ls -lR");          # will fail, as there is no 'ls -lR' binary
+ $res = readpipe({shell=>0}, "ls -lR"); # ditto
 
  # force shell, even though there are multiple arguments (arguments will be
- # quoted for you, including proper quoting on Win32).
- system({shell=>1}, "ls", "-laR");
+ # quoted and joined together for you, including proper quoting on Win32).
+ system({shell=>1}, "perl", "-e", "print 123"); # will print 123
+ $res = readpipe({shell=>1}, "perl", "-e", "print 123");
 
  # note that to prevent the quoting mechanism from quoting some special
  # characters (like ">") you can use scalar references, e.g.:
- system({shell=>1}, "ls", "-laR", \">", "/root/ls-laR");
+ system({shell=>1}, "ls", "-laR",  ">", "/root/ls-laR"); # fails, because the arguments are quoted so the command becomes: ls '-laR' '>' '/root/ls-laR'
+ system({shell=>1}, "ls", "-laR", \">", "/root/ls-laR"); # works
 
  # set LC_ALL/LANGUAGE/LANG environment variable
  $res = readpipe({lang=>"de_DE.UTF-8"}, "df");
