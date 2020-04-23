@@ -1,3 +1,10 @@
+0.336   2020-04-23  Released-By: PERLANCAR; Urgency: low
+
+	- No functional changes.
+
+	- [doc] Forgot to document the exit_code_success_criteria option.
+
+
 0.335   2020-04-23  Released-By: PERLANCAR; Urgency: medium
 
 	- Add option: exit_code_success_criteria.
