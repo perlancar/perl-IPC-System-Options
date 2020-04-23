@@ -640,6 +640,22 @@ An example of how this option can be used:
 This will allow you to run script in dry-run mode by setting environment
 variable.
 
+=item * exit_code_success_criteria => int|array[int]|Regexp|code
+
+Specify which command exit codes are to be marked as success. For example, exit
+code 1 for the B<diff> command does not signify an error; it just means that the
+two input files are different. So in this case you can either specify one of:
+
+ exit_code_success_criteria => [0,1]
+ exit_code_success_criteria => qr/\A(0|1)\z/
+ exit_code_success_criteria => sub { $_[0] == 0 || $_[0] == 1 }
+
+By default, if this option is not specified, non-zero exit codes count as
+failure.
+
+Currently this only affects logging: when exit code is considered non-success, a
+warning log is produced and C<readpipe()> does not log the result.
+
 =back
 
 =head2 readpipe([ \%opts ], @args)
@@ -706,6 +722,10 @@ See option documentation in C<system()>.
 
 See option documentation in C<system()>.
 
+=item * exit_code_success_criteria => int|array[int]|Regexp|code
+
+See option documentation in C<system()>.
+
 =back
 
 =head2 run([ \%opts ], @args)
@@ -763,6 +783,10 @@ Supply standard input.
 See option documentation in C<system()>.
 
 =item * dry_run => bool
+
+See option documentation in C<system()>.
+
+=item * exit_code_success_criteria => int|array[int]|Regexp|code
 
 See option documentation in C<system()>.
 
