@@ -355,14 +355,22 @@ sub _system_or_readpipe_or_run_or_start {
             defined($opts->{stdin}) ? \$opts->{stdin} : \*STDIN,
             sub {
                 if ($opts->{capture_stdout}) {
-                    ${$opts->{capture_stdout}} .= $_[0];
+                    if (ref $opts->{capture_stdout} eq 'CODE') {
+                        $opts->{capture_stdout}->($_[0]);
+                    } else {
+                        ${$opts->{capture_stdout}} .= $_[0];
+                    }
                 } else {
                     print $_[0];
                 }
             }, # out
             sub {
                 if ($opts->{capture_stderr}) {
-                    ${$opts->{capture_stderr}} .= $_[0];
+                    if (ref $opts->{capture_sderr} eq 'CODE') {
+                        $opts->{capture_sderr}->($_[0]);
+                    } else {
+                        ${$opts->{capture_stderr}} .= $_[0];
+                    }
                 } else {
                     print STDERR $_[0];
                 }
@@ -750,27 +758,11 @@ See option documentation in C<system()>.
 
 See option documentation in C<system()>.
 
-=item * capture_stdout => scalarref
+=item * capture_stdout => scalarref|coderef
 
 See option documentation in C<system()>.
 
-=item * capture_stderr => scalarref
-
-See option documentation in C<system()>.
-
-=item * capture_merged => scalarref
-
-See option documentation in C<system()>.
-
-=item * tee_stdout => scalarref
-
-See option documentation in C<system()>.
-
-=item * tee_stderr => scalarref
-
-See option documentation in C<system()>.
-
-=item * tee_merged => scalarref
+=item * capture_stderr => scalarref|coderef
 
 See option documentation in C<system()>.
 
