@@ -534,7 +534,11 @@ L<IPC::Run> for more details) which you can then call C<finish()>, etc on.
 
 =head1 FUNCTIONS
 
-=head2 system([ \%opts ], @args)
+=head2 system
+
+Usage:
+
+ system([ \%opts ], @args) => $child_error ($?)
 
 Just like perl's C<system()> except that it accepts an optional hash first
 argument to specify options. Currently known options:
@@ -666,7 +670,11 @@ warning log is produced and C<readpipe()> does not log the result.
 
 =back
 
-=head2 readpipe([ \%opts ], @args)
+=head2 readpipe
+
+Usage:
+
+ readpipe([ \%opts ], @args) => $output
 
 Just like perl's C<readpipe()> (a.k.a. C<qx()> a.k.a. C<``> a.k.a. the backtick
 operator) except that it accepts an optional hash first argument to specify
@@ -736,7 +744,11 @@ See option documentation in C<system()>.
 
 =back
 
-=head2 run([ \%opts ], @args)
+=head2 run
+
+Usage:
+
+ run([ \%opts ], @args) => $is_success
 
 Like C<system()>, but uses L<IPC::Run>'s C<run()>. Known options:
 
@@ -784,7 +796,11 @@ See option documentation in C<system()>.
 
 =back
 
-=head2 start([ \%opts ], @args)
+=head2 start
+
+Usage:
+
+ start([ \%opts ], @args) => $harness
 
 Like C<run()>, but uses L<IPC::Run>'s C<start()>. For known options, see
 C<run()>.
