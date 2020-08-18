@@ -463,7 +463,7 @@ sub start {
 }
 
 1;
-# ABSTRACT: Perl's system() and readpipe/qx replacement, with options
+# ABSTRACT: Perl's system(), readpipe()/qx, IPC::Run's run(), start() (with more options)
 
 =for Pod::Coverage ^(backtick)$
 
@@ -531,6 +531,17 @@ L<IPC::Run> for more details) which you can then call C<finish()>, etc on.
 
 
 =head1 DESCRIPTION
+
+This module provides replacement (wrapper) for Perl's C<system()>, C<readpipe()>
+(qx//, a.k.a. the backtick operator), as well as L<IPC::Run>'s C<start()> and
+C<run()>. The wrappers give you options like forcing/avoiding use of shell (like
+what L<IPC::System::Simple> offers you), logging the arguments and/or output
+(using L<Log::ger>), temporarily setting environment variables, temporarily
+setting working directory, dying on non-zero exit code, capturing (or tee-ing)
+output (stdout/stderr) (using L<Capture::Tiny>), and a few others. They are
+meant as a convenience so you can just call C<system()> (or the other wrapper
+target) instead of doing some additional setup and cleanup yourself.
+
 
 =head1 FUNCTIONS
 
