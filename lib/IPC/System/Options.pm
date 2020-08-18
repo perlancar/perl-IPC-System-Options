@@ -815,3 +815,14 @@ Usage:
 
 Like C<run()>, but uses L<IPC::Run>'s C<start()>. For known options, see
 C<run()>.
+
+
+=head1 SEE ALSO
+
+L<IPC::System::Simple> also provides wrapper for C<system()> and C<readpipe()>
+with some additional behavior, although its scope is not as extensive as
+IPC::System::Options.
+
+L<Proc::Govern> similarly provide a run+options function, with a different set
+of options, including system load watching, logging output to file, disabling
+and screensaver or power management.
