@@ -67,9 +67,13 @@ sub _system_or_readpipe_or_run_or_start {
                         tee_stdout|tee_stderr|tee_merged|
                         chdir|dies?|dry_run|env|lang|log|max_log_output|shell|
                         exit_code_success_criteria|
+                        fail_log_level|
                         stdin # XXX: only for run()
                     )\z/x;
     }
+
+    # defaults
+    $opts->{fail_log_level} ||= 'error';
 
     my $opt_die = $opts->{die} || $opts->{dies};
 
@@ -92,6 +96,9 @@ sub _system_or_readpipe_or_run_or_start {
     };
 
     if ($opts->{log}) {
+        require Log::ger::Plugin::MultilevelLog;
+        require Log::ger::Plugin;
+        Log::ger::Plugin->set(MultilevelLog => (sub_name => 'logger'));
         require Log::ger;
         Log::ger->import;
     }
@@ -429,7 +436,7 @@ sub _system_or_readpipe_or_run_or_start {
                      ", captured merged: <<" .
                      (defined ${$opts->{capture_merged}} ? ${$opts->{capture_merged}} : ''). ">>" : ""),
             );
-            log_error($msg) if $opts->{log};
+            logger($opts->{fail_log_level}, $msg) if $opts->{log};
             die $msg if $opt_die;
         }
     }
@@ -582,6 +589,12 @@ Temporarily set environment variables.
 
 If set to true, then will log invocation as well as return/result value. Will
 log using L<Log::ger> at the C<trace> level.
+
+=item * fail_log_level => str
+
+When a command fail (and logging is enabled), log the failure message at this
+level. The default is C<error> which is a sensible default but sometimes you
+want to log the failure at different level.
 
 =item * die => bool
 
