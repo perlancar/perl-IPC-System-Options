@@ -96,7 +96,7 @@ sub _system_or_readpipe_or_run_or_start {
     };
 
     if ($opts->{log}) {
-        require Log::ger::Plugin::MultilevelLog;
+        require Log::ger::Plugin::MultilevelLog; # just so scan_prereqs can detect it
         require Log::ger::Plugin;
         Log::ger::Plugin->set(MultilevelLog => (sub_name => 'logger'));
         require Log::ger;
